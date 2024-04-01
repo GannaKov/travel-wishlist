@@ -1,15 +1,16 @@
 const express = require("express");
-const exampleRouter = require("./routes/example");
+
+const countryRouter = require("./routes/countries.js");
 //require('dotenv').config();
 const cors = require("cors");
 const app = express();
 app.use(cors());
 
-//app.use(express.urlencoded({ extended: false }));
-//app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 //const path = require('path');
 
-app.use("/", exampleRouter);
+app.use("/countries", countryRouter);
 
 app.use((err, req, res, next) => {
   if (err.status === 404) {
