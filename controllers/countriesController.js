@@ -1,5 +1,6 @@
 const Country = require("../models/countryModel");
 
+// GET
 const getAllCountries = async (req, res, next) => {
   try {
     const isSort = req.query.sort;
@@ -21,4 +22,18 @@ const getAllCountries = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllCountries };
+// POST
+const postCountry = async (req, res, next) => {
+  try {
+    const { name, alpha2Code, alpha3Code } = req.body;
+    const newCountry = new Country({ name, alpha2Code, alpha3Code });
+    const result = await newCountry.save();
+    if (!result) {
+      throw { status: 500, message: "Failed to create country" };
+    }
+    res.status(201).json({ status: "Created ", code: 201, data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+module.exports = { getAllCountries, postCountry };
