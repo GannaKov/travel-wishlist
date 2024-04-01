@@ -2,8 +2,12 @@ const Country = require("../models/countryModel");
 
 const getAllCountries = async (req, res, next) => {
   try {
-    const result = await Country.find();
-    console.log("res", result);
+    const isSort = req.query.sort;
+
+    const result = isSort
+      ? await Country.find().sort({ name: 1 })
+      : await Country.find();
+    // console.log("res", result);
     if (result.length === 0) {
       throw { status: 404, message: "No student found" };
     }
