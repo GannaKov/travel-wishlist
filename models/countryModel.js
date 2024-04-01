@@ -3,8 +3,8 @@ const { Schema, model } = mongoose;
 
 const countrySchema = new Schema({
   name: { type: String, required: [true, "Required"], trim: true },
-  alpha2Code: String,
-  alpha3Code: String,
+  alpha2Code: { type: String, required: [true, "Required"], trim: true },
+  alpha3Code: { type: String, required: [true, "Required"], trim: true },
 });
 
 const Country = model("Country", countrySchema);

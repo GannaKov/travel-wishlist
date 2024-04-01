@@ -26,12 +26,24 @@ const getAllCountries = async (req, res, next) => {
 const postCountry = async (req, res, next) => {
   try {
     const { name, alpha2Code, alpha3Code } = req.body;
-    const newCountry = new Country({ name, alpha2Code, alpha3Code });
-    const result = await newCountry.save();
-    if (!result) {
-      throw { status: 500, message: "Failed to create country" };
+    const existingCountry = await Country.findOne({
+      $or: [{ alpha2Code }, { alpha3Code }],
+    });
+    // console.log("match", existingCountry);
+    if (existingCountry) {
+      return res.status(409).json({
+        status: "error",
+        code: 409,
+        message: "Country already exists",
+      });
+    } else {
+      const newCountry = new Country({ name, alpha2Code, alpha3Code });
+      const result = await newCountry.save();
+      if (!result) {
+        throw { status: 500, message: "Failed to create country" };
+      }
+      res.status(201).json({ status: "Created ", code: 201, data: result });
     }
-    res.status(201).json({ status: "Created ", code: 201, data: result });
   } catch (err) {
     next(err);
   }
