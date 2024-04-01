@@ -27,7 +27,10 @@ const postCountry = async (req, res, next) => {
   try {
     const { name, alpha2Code, alpha3Code } = req.body;
     const existingCountry = await Country.findOne({
-      $or: [{ alpha2Code }, { alpha3Code }],
+      $or: [
+        { alpha2Code: alpha2Code.toUpperCase() },
+        { alpha3Code: alpha3Code.toUpperCase() },
+      ],
     });
     // console.log("match", existingCountry);
     if (existingCountry) {
