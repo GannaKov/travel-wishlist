@@ -104,18 +104,14 @@ const updateCountry = async (req, res, next) => {
     const newCountryAlpha2Code = countryAlpha2Code || country.alpha2Code;
     const newCountryAlpha3Code = countryAlpha3Code || country.alpha3Code;
 
-    const updatedCountry = await Country.findByIdAndUpdate(
-      // { _id: country.id },
-      country.id,
-      {
-        name: newCountryName,
-        alpha2Code: newCountryAlpha2Code,
-        alpha3Code: newCountryAlpha3Code,
-      },
-      { new: true }
-    );
+    const updatedCountry = new Country({
+      name: newCountryName,
+      alpha2Code: newCountryAlpha2Code.toUpperCase(),
+      alpha3Code: newCountryAlpha3Code.toUpperCase(),
+    });
+    const result = await updatedCountry.save();
 
-    if (!updatedCountry) {
+    if (!result) {
       throw res.status(500).send("Error updating country");
     }
     res.status(200).json({
@@ -128,9 +124,8 @@ const updateCountry = async (req, res, next) => {
   }
 };
 
-// delete /countries/:code
-
-const deleteCountry = async (req, res, next) => {
+// update visibility
+const toggleVisitedStatus = async (req, res, next) => {
   try {
     const { code } = req.params;
     console.log("code", code);
@@ -144,24 +139,54 @@ const deleteCountry = async (req, res, next) => {
     if (!country) {
       throw { status: 404, message: "Country not found" };
     }
-    const deletedCountry = await Country.findByIdAndDelete(country.id);
-    console.log("del", deletedCountry);
-    if (!deletedCountry) {
-      throw res.status(500).send("Error updating country");
-    }
+    country.visited = !country.visited;
+    await country.save();
+
     res.status(200).json({
       status: "success",
       code: 200,
-      data: deletedCountry,
+      message: `Visited status toggled for ${country.name}`,
+      data: country,
     });
   } catch (err) {
     next(err);
   }
 };
+// delete /countries/:code
+
+// const deleteCountry = async (req, res, next) => {
+//   try {
+//     const { code } = req.params;
+//     console.log("code", code);
+//     const country = await Country.findOne({
+//       $or: [
+//         { alpha2Code: code.toUpperCase() },
+//         { alpha3Code: code.toUpperCase() },
+//       ],
+//     });
+
+//     if (!country) {
+//       throw { status: 404, message: "Country not found" };
+//     }
+//     const deletedCountry = await Country.findByIdAndDelete(country.id);
+//     console.log("del", deletedCountry);
+//     if (!deletedCountry) {
+//       throw res.status(500).send("Error updating country");
+//     }
+//     res.status(200).json({
+//       status: "success",
+//       code: 200,
+//       data: deletedCountry,
+//     });
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 module.exports = {
   getAllCountries,
   postCountry,
   getCountryByCode,
   updateCountry,
-  deleteCountry,
+  //deleteCountry,
+  toggleVisitedStatus,
 };
