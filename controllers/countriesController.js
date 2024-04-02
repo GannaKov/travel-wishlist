@@ -51,4 +51,85 @@ const postCountry = async (req, res, next) => {
     next(err);
   }
 };
-module.exports = { getAllCountries, postCountry };
+
+//   countries/:code
+
+const getCountryByCode = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+
+    const country = await Country.findOne({
+      $or: [
+        { alpha2Code: code.toUpperCase() },
+        { alpha3Code: code.toUpperCase() },
+      ],
+    });
+
+    if (!country) {
+      throw { status: 404, message: "Country not found" };
+    }
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      data: country,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const updateCountry = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+    const countryName = req.body?.name;
+    const countryAlpha2Code = req.body?.alpha2Code?.toUpperCase();
+    const countryAlpha3Code = req.body.alpha3Code?.toUpperCase();
+
+    const country = await Country.findOne({
+      $or: [
+        { alpha2Code: code.toUpperCase() },
+        { alpha3Code: code.toUpperCase() },
+      ],
+    });
+
+    if (!country) {
+      throw { status: 404, message: "Country not found" };
+    }
+    const newCountryName = countryName || country.name;
+    const newCountryAlpha2Code = countryAlpha2Code || country.alpha2Code;
+    const newCountryAlpha3Code = countryAlpha3Code || country.alpha3Code;
+    console.log(
+      "new",
+      newCountryName,
+      newCountryAlpha2Code,
+      newCountryAlpha3Code
+    );
+    console.log("country.id", country.id);
+    const updatedCountry = await Country.findByIdAndUpdate(
+      { _id: country.id },
+      {
+        name: newCountryName,
+        alpha2Code: newCountryAlpha2Code,
+        alpha3Code: newCountryAlpha3Code,
+      },
+      { new: true }
+    );
+
+    if (!updatedCountry) {
+      throw res.status(500).send("Error updating country");
+    }
+    res.status(200).json({
+      status: "udated ",
+      code: 200,
+      data: updatedCountry,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+module.exports = {
+  getAllCountries,
+  postCountry,
+  getCountryByCode,
+  updateCountry,
+};
