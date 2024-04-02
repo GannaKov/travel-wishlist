@@ -40,7 +40,11 @@ const postCountry = async (req, res, next) => {
         message: "Country already exists",
       });
     } else {
-      const newCountry = new Country({ name, alpha2Code, alpha3Code });
+      const newCountry = new Country({
+        name,
+        alpha2Code: alpha2Code.toUpperCase(),
+        alpha3Code: alpha3Code.toUpperCase(),
+      });
       const result = await newCountry.save();
       if (!result) {
         throw { status: 500, message: "Failed to create country" };
@@ -52,7 +56,7 @@ const postCountry = async (req, res, next) => {
   }
 };
 
-//   countries/:code
+//  get countries/:code
 
 const getCountryByCode = async (req, res, next) => {
   try {
@@ -78,6 +82,7 @@ const getCountryByCode = async (req, res, next) => {
   }
 };
 
+//   change countries/:code
 const updateCountry = async (req, res, next) => {
   try {
     const { code } = req.params;
@@ -98,15 +103,10 @@ const updateCountry = async (req, res, next) => {
     const newCountryName = countryName || country.name;
     const newCountryAlpha2Code = countryAlpha2Code || country.alpha2Code;
     const newCountryAlpha3Code = countryAlpha3Code || country.alpha3Code;
-    console.log(
-      "new",
-      newCountryName,
-      newCountryAlpha2Code,
-      newCountryAlpha3Code
-    );
-    console.log("country.id", country.id);
+
     const updatedCountry = await Country.findByIdAndUpdate(
-      { _id: country.id },
+      // { _id: country.id },
+      country.id,
       {
         name: newCountryName,
         alpha2Code: newCountryAlpha2Code,
@@ -127,9 +127,41 @@ const updateCountry = async (req, res, next) => {
     next(err);
   }
 };
+
+// delete /countries/:code
+
+const deleteCountry = async (req, res, next) => {
+  try {
+    const { code } = req.params;
+    console.log("code", code);
+    const country = await Country.findOne({
+      $or: [
+        { alpha2Code: code.toUpperCase() },
+        { alpha3Code: code.toUpperCase() },
+      ],
+    });
+
+    if (!country) {
+      throw { status: 404, message: "Country not found" };
+    }
+    const deletedCountry = await Country.findByIdAndDelete(country.id);
+    console.log("del", deletedCountry);
+    if (!deletedCountry) {
+      throw res.status(500).send("Error updating country");
+    }
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      data: deletedCountry,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 module.exports = {
   getAllCountries,
   postCountry,
   getCountryByCode,
   updateCountry,
+  deleteCountry,
 };
