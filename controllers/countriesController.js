@@ -1,4 +1,5 @@
 const Country = require("../models/countryModel");
+const { matchedData, validationResult } = require("express-validator");
 
 // GET
 const getAllCountries = async (req, res, next) => {
@@ -10,7 +11,7 @@ const getAllCountries = async (req, res, next) => {
       : await Country.find();
     // console.log("res", result);
     if (result.length === 0) {
-      throw { status: 404, message: "No student found" };
+      throw { status: 404, message: "No country found" };
     }
     res.status(200).json({
       status: "success",
@@ -50,32 +51,47 @@ const getCountryByCode = async (req, res, next) => {
 // POST
 const postCountry = async (req, res, next) => {
   try {
-    const { name, alpha2Code, alpha3Code, visited } = req.body;
-    const existingCountry = await Country.findOne({
-      $or: [
-        { alpha2Code: alpha2Code.toUpperCase() },
-        { alpha3Code: alpha3Code.toUpperCase() },
-      ],
-    });
-    // console.log("match", existingCountry);
-    if (existingCountry) {
-      return res.status(409).json({
-        status: "error",
-        code: 409,
-        message: "Country already exists",
+    const validResult = validationResult(req);
+
+    console.log(validResult.array());
+    if (validResult.isEmpty()) {
+      const { visited } = req.body;
+      const { name, alpha2Code, alpha3Code } = matchedData(req);
+      console.log(name, alpha2Code, alpha3Code);
+      const existingCountry = await Country.findOne({
+        $or: [
+          { alpha2Code: alpha2Code.toUpperCase() },
+          { alpha3Code: alpha3Code.toUpperCase() },
+        ],
       });
-    } else {
-      const newCountry = new Country({
-        name,
-        alpha2Code: alpha2Code.toUpperCase(),
-        alpha3Code: alpha3Code.toUpperCase(),
-        visited,
-      });
-      const result = await newCountry.save();
-      if (!result) {
-        throw { status: 500, message: "Failed to create country" };
+
+      if (existingCountry) {
+        return res.status(409).json({
+          status: "error",
+          code: 409,
+          message: "Country already exists",
+        });
+      } else {
+        const newCountry = new Country({
+          name,
+          alpha2Code: alpha2Code.toUpperCase(),
+          alpha3Code: alpha3Code.toUpperCase(),
+          visited,
+        });
+        const result = await newCountry.save();
+        if (!result) {
+          throw { status: 500, message: "Failed to create country" };
+        }
+        res.status(201).json({ status: "Created ", code: 201, data: result });
       }
-      res.status(201).json({ status: "Created ", code: 201, data: result });
+    } else {
+      throw {
+        status: 400,
+        message: `Bad Request: ${validResult.array()[0].path} is ${
+          validResult.array()[0].value
+        }`,
+        errors: validResult.array(),
+      };
     }
   } catch (err) {
     next(err);
@@ -121,7 +137,7 @@ const updateCountry = async (req, res, next) => {
       throw res.status(500).send("Error updating country");
     }
     res.status(200).json({
-      status: "udated ",
+      status: "updated ",
       code: 200,
       data: updatedCountry,
     });
