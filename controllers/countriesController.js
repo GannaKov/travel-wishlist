@@ -22,42 +22,7 @@ const getAllCountries = async (req, res, next) => {
   }
 };
 
-// POST
-const postCountry = async (req, res, next) => {
-  try {
-    const { name, alpha2Code, alpha3Code } = req.body;
-    const existingCountry = await Country.findOne({
-      $or: [
-        { alpha2Code: alpha2Code.toUpperCase() },
-        { alpha3Code: alpha3Code.toUpperCase() },
-      ],
-    });
-    // console.log("match", existingCountry);
-    if (existingCountry) {
-      return res.status(409).json({
-        status: "error",
-        code: 409,
-        message: "Country already exists",
-      });
-    } else {
-      const newCountry = new Country({
-        name,
-        alpha2Code: alpha2Code.toUpperCase(),
-        alpha3Code: alpha3Code.toUpperCase(),
-      });
-      const result = await newCountry.save();
-      if (!result) {
-        throw { status: 500, message: "Failed to create country" };
-      }
-      res.status(201).json({ status: "Created ", code: 201, data: result });
-    }
-  } catch (err) {
-    next(err);
-  }
-};
-
 //  get countries/:code
-
 const getCountryByCode = async (req, res, next) => {
   try {
     const { code } = req.params;
@@ -82,13 +47,49 @@ const getCountryByCode = async (req, res, next) => {
   }
 };
 
-//   change countries/:code
+// POST
+const postCountry = async (req, res, next) => {
+  try {
+    const { name, alpha2Code, alpha3Code, visited } = req.body;
+    const existingCountry = await Country.findOne({
+      $or: [
+        { alpha2Code: alpha2Code.toUpperCase() },
+        { alpha3Code: alpha3Code.toUpperCase() },
+      ],
+    });
+    // console.log("match", existingCountry);
+    if (existingCountry) {
+      return res.status(409).json({
+        status: "error",
+        code: 409,
+        message: "Country already exists",
+      });
+    } else {
+      const newCountry = new Country({
+        name,
+        alpha2Code: alpha2Code.toUpperCase(),
+        alpha3Code: alpha3Code.toUpperCase(),
+        visited,
+      });
+      const result = await newCountry.save();
+      if (!result) {
+        throw { status: 500, message: "Failed to create country" };
+      }
+      res.status(201).json({ status: "Created ", code: 201, data: result });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+//   put change countries/:code
 const updateCountry = async (req, res, next) => {
   try {
     const { code } = req.params;
     const countryName = req.body?.name;
     const countryAlpha2Code = req.body?.alpha2Code?.toUpperCase();
     const countryAlpha3Code = req.body.alpha3Code?.toUpperCase();
+    const countryVisited = req.body?.visited;
 
     const country = await Country.findOne({
       $or: [
@@ -103,15 +104,20 @@ const updateCountry = async (req, res, next) => {
     const newCountryName = countryName || country.name;
     const newCountryAlpha2Code = countryAlpha2Code || country.alpha2Code;
     const newCountryAlpha3Code = countryAlpha3Code || country.alpha3Code;
+    const newCountryVisited = countryVisited || country.visited;
 
-    const updatedCountry = new Country({
-      name: newCountryName,
-      alpha2Code: newCountryAlpha2Code.toUpperCase(),
-      alpha3Code: newCountryAlpha3Code.toUpperCase(),
-    });
-    const result = await updatedCountry.save();
+    const updatedCountry = await Country.findByIdAndUpdate(
+      country.id,
+      {
+        visited: newCountryVisited,
+        name: newCountryName,
+        alpha2Code: newCountryAlpha2Code.toUpperCase(),
+        alpha3Code: newCountryAlpha3Code.toUpperCase(),
+      },
+      { new: true }
+    );
 
-    if (!result) {
+    if (!updatedCountry) {
       throw res.status(500).send("Error updating country");
     }
     res.status(200).json({
