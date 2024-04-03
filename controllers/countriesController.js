@@ -7,9 +7,9 @@ const getAllCountries = async (req, res, next) => {
     const isSort = req.query.sort;
 
     const result = isSort
-      ? await Country.find().sort({ name: 1 })
+      ? await Country.find().sort({ visited: -1, name: 1 })
       : await Country.find();
-    // console.log("res", result);
+
     if (result.length === 0) {
       throw { status: 404, message: "No country found" };
     }
