@@ -8,7 +8,7 @@ const getAllCountries = async (req, res, next) => {
 
     const result = isSort
       ? await Country.find().sort({ visited: -1, name: 1 })
-      : await Country.find();
+      : await Country.find().sort({ visited: -1 });
 
     if (result.length === 0) {
       throw { status: 404, message: "No country found" };
@@ -53,11 +53,10 @@ const postCountry = async (req, res, next) => {
   try {
     const validResult = validationResult(req);
 
-    console.log(validResult.array());
     if (validResult.isEmpty()) {
       const { visited } = req.body;
       const { name, alpha2Code, alpha3Code } = matchedData(req);
-      console.log(name, alpha2Code, alpha3Code);
+
       const existingCountry = await Country.findOne({
         $or: [
           { alpha2Code: alpha2Code.toUpperCase() },
@@ -146,11 +145,11 @@ const updateCountry = async (req, res, next) => {
   }
 };
 
-// update visibility
+// update visited
 const toggleVisitedStatus = async (req, res, next) => {
   try {
     const { code } = req.params;
-    console.log("code", code);
+
     const country = await Country.findOne({
       $or: [
         { alpha2Code: code.toUpperCase() },
